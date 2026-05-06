@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caso Práctico · COSMIC CFP · OrderFlow</title>
+<style>
+:root {
+  --accent:      #2563eb;
+  --accent-dk:   #1d4ed8;
+  --sidebar-bg:  #111827;
+  --sidebar-bd:  #1f2937;
+  --sidebar-txt: #9ca3af;
+  --sidebar-acc: #3b82f6;
+  --bg:          #eef0f3;
+  --surface:     #ffffff;
+  --border:      #e5e7eb;
+  --text:        #111827;
+  --text-2:      #374151;
+  --text-muted:  #6b7280;
+  /* code (VS Code Dark+) */
+  --code-bg:  #1e1e1e;
+  --code-tab: #2d2d30;
+  --code-txt: #d4d4d4;
+  --code-ln:  #4a4a4a;
+  --c-kw: #569cd6;
+  --c-tp: #4ec9b0;
+  --c-an: #dcdcaa;
+  --c-st: #ce9178;
+  --c-cm: #6a9955;
+  --c-nm: #b5cea8;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:17px}
+body{font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;min-height:100vh}
+
+/* ── SIDEBAR ─────────────────────────────────────────────────────── */
+#sidebar{width:240px;min-width:240px;background:var(--sidebar-bg);height:100vh;position:fixed;top:0;left:0;overflow-y:auto;z-index:100;display:flex;flex-direction:column}
+#sb-header{padding:1.4rem 1.25rem 1.2rem;border-bottom:1px solid var(--sidebar-bd);flex-shrink:0}
+#sb-logo{display:flex;align-items:center;gap:.6rem;margin-bottom:.45rem}
+#sb-logo-mark{width:28px;height:28px;background:var(--accent);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.58rem;font-weight:900;color:#fff;letter-spacing:.03em;flex-shrink:0}
+#sb-header .logo{font-weight:700;font-size:.84rem;color:#f9fafb;letter-spacing:.04em}
+#sb-header .sub{font-size:.71rem;color:var(--sidebar-txt);margin-top:.2rem}
+#sidebar nav{flex:1;padding:.5rem 0 2rem}
+#sidebar nav a{display:block;padding:.45rem 1.25rem;text-decoration:none;color:var(--sidebar-txt);font-size:.81rem;transition:all .15s;border-left:2px solid transparent}
+#sidebar nav a:hover{background:#1f2937;color:#f3f4f6}
+#sidebar nav a.active{color:#f9fafb;border-left-color:var(--sidebar-acc);background:#1f2937}
+#sidebar nav .ng{padding:.75rem 1.25rem .2rem;font-size:.63rem;text-transform:uppercase;letter-spacing:.12em;color:#4b5563;font-weight:700}
+#sidebar nav a.sub{padding-left:2.25rem;font-size:.78rem}
+#sidebar nav a.sub::before{content:'– ';opacity:.4}
+
+/* ── PAGE ────────────────────────────────────────────────────────── */
+#page{margin-left:240px;flex:1;padding:2.25rem 2.5rem;min-width:0}
+#content{max-width:940px;margin:0 auto}
+
+/* ── PORTADA ─────────────────────────────────────────────────────── */
+#portada{background:linear-gradient(150deg,#0d1b35 0%,#1a3461 45%,#1e40af 100%);color:#fff;padding:3rem 2.75rem;border-radius:14px;margin-bottom:2rem;position:relative;overflow:hidden}
+#portada::before{content:'';position:absolute;top:-50px;right:-50px;width:300px;height:300px;background:rgba(59,130,246,.1);border-radius:50%;pointer-events:none}
+#portada::after{content:'';position:absolute;bottom:-70px;right:80px;width:200px;height:200px;background:rgba(99,102,241,.08);border-radius:50%;pointer-events:none}
+.portada-label{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;opacity:.5;margin-bottom:1.1rem;font-weight:600;position:relative}
+#portada h1{font-size:2.4rem;font-weight:800;line-height:1.05;margin-bottom:.2rem;letter-spacing:-.03em;position:relative}
+.portada-system{font-size:1.2rem;font-weight:300;opacity:.65;letter-spacing:.03em;position:relative}
+.portada-divider{width:48px;height:2px;background:rgba(255,255,255,.28);margin:.9rem 0 1rem;border-radius:2px}
+.portada-desc{font-size:.86rem;opacity:.52;margin-bottom:2.25rem;letter-spacing:.01em}
+.portada-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.6rem;position:relative}
+.meta-item{background:rgba(255,255,255,.07);border-radius:8px;padding:.65rem 1rem;border:1px solid rgba(255,255,255,.1)}
+.meta-label{font-size:.59rem;text-transform:uppercase;letter-spacing:.12em;opacity:.45;margin-bottom:.25rem;font-weight:600}
+.meta-val{font-size:.8rem;font-weight:600;opacity:.9}
+
+/* ── MOBILE MENU ─────────────────────────────────────────────────── */
+#menu-btn{display:none;position:fixed;top:.85rem;left:.85rem;z-index:200;background:var(--sidebar-bg);color:#f9fafb;border:1px solid #374151;border-radius:8px;width:40px;height:40px;cursor:pointer;font-size:1.1rem;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
+#overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:99;backdrop-filter:blur(2px)}
+#overlay.open{display:block}
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────── */
+@media(max-width:1100px){
+  #page{padding:1.75rem 1.75rem}
+}
+@media(max-width:900px){
+  #sidebar{transform:translateX(-240px);transition:transform .25s ease}
+  #sidebar.open{transform:translateX(0)}
+  #page{margin-left:0;padding:1.5rem 1.25rem}
+  #menu-btn{display:flex}
+  #portada{padding:2rem 1.5rem}
+  #portada h1{font-size:1.8rem}
+}
+@media(max-width:600px){
+  #page{padding:1rem .85rem}
+  #portada{padding:1.5rem 1.1rem;border-radius:10px}
+  #portada h1{font-size:1.45rem}
+  .portada-meta{grid-template-columns:1fr 1fr}
+  .ep-table{font-size:.78rem}
+  .ep-table td,.ep-table th{padding:.32rem .55rem}
+  .code-body pre{font-size:.76rem}
+  .ctrl-hdr{flex-wrap:wrap}
+}
+
+/* ── SECTION CARDS ───────────────────────────────────────────────── */
+.section{background:var(--surface);border-radius:12px;padding:2rem 2.25rem;margin-bottom:1.75rem;box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04);border:1px solid var(--border)}
+.section-title{font-size:1.15rem;font-weight:700;color:var(--text);padding-left:.9rem;border-left:3px solid var(--accent);margin-bottom:1.25rem;line-height:1.3}
+.section-subtitle{font-size:1.05rem;font-weight:600;color:var(--text-2);margin:1.5rem 0 .65rem;display:flex;align-items:center;gap:.5rem}
+.section-subtitle::before{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;flex-shrink:0}
+p{line-height:1.75;margin-bottom:.7rem;color:var(--text-2)}
+ul.list{padding-left:1.5rem;margin-bottom:.8rem}
+ul.list li{line-height:1.75;margin-bottom:.3rem;color:var(--text-2)}
+.scroll-target{scroll-margin-top:1.5rem}
+
+/* ── BANNER ──────────────────────────────────────────────────────── */
+.banner{padding:.75rem 1.1rem;border-radius:8px;font-size:.9rem;margin-bottom:1.1rem;border-left:3px solid;line-height:1.65}
+.b-green {background:#f0fdf4;border-color:#16a34a;color:#14532d}
+.b-orange{background:#fff7ed;border-color:#ea580c;color:#9a3412}
+.b-red   {background:#fef2f2;border-color:#dc2626;color:#991b1b}
+.b-teal  {background:#ecfeff;border-color:#0891b2;color:#164e63}
+.b-purple{background:#faf5ff;border-color:#7c3aed;color:#5b21b6}
+.b-blue  {background:#eff6ff;border-color:#2563eb;color:#1e40af}
+
+/* ── ENDPOINT TABLE ──────────────────────────────────────────────── */
+.ep-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.88rem;margin-bottom:1.1rem;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ep-table th{background:#1e3358;color:#fff;padding:.6rem .9rem;text-align:left;font-weight:600;font-size:.81rem;letter-spacing:.03em}
+.ep-table td{padding:.5rem .9rem;border-bottom:1px solid #f1f3f5}
+.ep-table tbody tr:last-child td{border-bottom:none}
+.ep-table tr:hover td{background:#f5f8ff}
+.ep-id{font-family:'Consolas','Courier New',monospace;font-weight:700;font-size:.85rem;color:#1e3358}
+.ep-route{font-family:'Consolas','Courier New',monospace;font-size:.84rem;color:#374151}
+.mth{display:inline-block;padding:2px 8px;border-radius:4px;font-family:'Consolas',monospace;font-size:.76rem;font-weight:700;letter-spacing:.03em}
+.m-GET   {background:#dbeafe;color:#1d4ed8}
+.m-POST  {background:#d1fae5;color:#065f46}
+.m-PUT   {background:#fef3c7;color:#92400e}
+.m-PATCH {background:#ede9fe;color:#4c1d95}
+.m-DELETE{background:#fee2e2;color:#9f1239}
+.grp-user    td{background:#fafcff}
+.grp-product td{background:#fffcf8}
+.grp-order   td{background:#fffafa}
+.grp-report  td{background:#f8fffe}
+.grp-fulfil  td{background:#fdfaff}
+.grp-batch   td{background:#f0fdf8}
+
+/* ── CONTROLLER CARD ─────────────────────────────────────────────── */
+.ctrl-card{background:var(--surface);border-radius:12px;overflow:hidden;margin-bottom:2rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04)}
+.ctrl-card-head{padding:.9rem 1.4rem;display:flex;align-items:center;gap:.75rem;border-bottom:1px solid var(--border);background:#fafafa}
+.ctrl-card-title{font-size:1rem;font-weight:700;color:var(--text);margin:0;flex:1}
+.ctrl-badge{font-size:.71rem;font-weight:700;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.bg-green {background:#dcfce7;color:#166534}
+.bg-orange{background:#ffedd5;color:#9a3412}
+.bg-red   {background:#fee2e2;color:#991b1b}
+.bg-teal  {background:#cffafe;color:#155e75}
+.bg-purple{background:#ede9fe;color:#5b21b6}
+.ctrl-card-body{padding:1.35rem 1.4rem}
+
+/* ── CODE BLOCK ──────────────────────────────────────────────────── */
+.code-wrap{border-radius:10px;overflow:hidden;border:1px solid #2a2a2a;box-shadow:0 6px 24px rgba(0,0,0,.28)}
+.code-tab{background:#2d2d30;padding:.5rem 1rem .5rem .8rem;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #1e1e1e;min-height:40px}
+.code-tab-left{display:flex;align-items:center;gap:.7rem}
+.mac-dots{display:flex;gap:5px;align-items:center}
+.mac-dot{width:11px;height:11px;border-radius:50%;display:inline-block}
+.mac-dot-r{background:#ff5f57}.mac-dot-y{background:#febc2e}.mac-dot-g{background:#28c840}
+.code-tab-name{font-family:'Consolas','Courier New',monospace;font-size:.83rem;color:#c0c0c0}
+.code-tab-ep{font-size:.76rem;color:#606060;font-style:italic}
+.code-body{background:var(--code-bg);overflow-x:auto;padding:.65rem 0}
+.code-body pre{margin:0;font-family:'Consolas','Courier New',monospace;font-size:.88rem;line-height:1.72;white-space:pre}
+.cl{display:flex;padding:0 1rem}
+.cl:hover{background:rgba(255,255,255,.035)}
+.ln{min-width:36px;text-align:right;color:var(--code-ln);padding-right:1.2rem;user-select:none;font-size:.78rem;padding-top:1px;border-right:1px solid #2a2a2a;margin-right:.6rem}
+.lc{flex:1;color:var(--code-txt)}
+.kw{color:var(--c-kw)}.tp{color:var(--c-tp)}.an{color:var(--c-an)}
+.st{color:var(--c-st)}.cm{color:var(--c-cm);font-style:italic}.nm{color:var(--c-nm)}
+
+/* ── INLINE CODE ─────────────────────────────────────────────────── */
+code{font-family:'Consolas','Courier New',monospace;background:#f0f4ff;padding:2px 6px;border-radius:4px;font-size:.84em;color:#2563eb;border:1px solid #dbeafe}
+
+/* ── MEASUREMENT FORM ────────────────────────────────────────────── */
+.mform-participant{display:flex;align-items:center;gap:.85rem;margin-bottom:1.75rem;padding:.9rem 1.1rem;background:#f8faff;border-radius:10px;border:1.5px solid #dbeafe;flex-wrap:wrap}
+.mform-participant label{font-weight:600;font-size:.9rem;color:var(--text);white-space:nowrap}
+.mform-participant input{flex:1;min-width:220px;max-width:360px;padding:.52rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;color:var(--text);background:#fff;transition:border-color .15s,box-shadow .15s}
+.mform-participant input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.req-note{font-size:.8rem;color:#92400e;margin-bottom:1.1rem;display:flex;align-items:center;gap:.45rem;padding:.5rem .85rem;background:#fffbf0;border-radius:8px;border:1px solid #fed7aa}
+.mform-table{width:100%;border-collapse:separate;border-spacing:0;font-size:.83rem;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:1.5rem}
+.mform-table th{background:#1e3358;color:#fff;padding:.55rem .55rem;text-align:center;font-weight:600;font-size:.75rem;letter-spacing:.04em}
+.mform-table th.th-l{text-align:left;padding-left:.9rem}
+.mform-table td{padding:.28rem .28rem;border-bottom:1px solid #f0f2f5;vertical-align:middle}
+.mform-table td.td-ep{padding:.42rem .9rem;font-family:'Consolas','Courier New',monospace;font-weight:700;font-size:.83rem;color:#1e3358;white-space:nowrap}
+.mform-table td.td-name{padding:.42rem .5rem;color:var(--text-2);font-size:.81rem;white-space:nowrap}
+.mform-table tbody tr:last-child td{border-bottom:none}
+.mform-table .fgrp-user    td{background:#fafcff}
+.mform-table .fgrp-product td{background:#fffcf8}
+.mform-table .fgrp-order   td{background:#fffafa}
+.mform-table .fgrp-report  td{background:#f8fffe}
+.mform-table .fgrp-fulfil  td{background:#fdfaff}
+.mform-table .fgrp-batch   td{background:#f0fdf8}
+.mnum{width:52px;padding:.32rem .2rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.88rem;text-align:center;font-family:'Consolas','Courier New',monospace;color:var(--text);background:#fff;transition:border-color .15s;-moz-appearance:textfield;display:block;margin:0 auto}
+.mnum::-webkit-inner-spin-button,.mnum::-webkit-outer-spin-button{-webkit-appearance:none}
+.mnum:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.cfp-cell{width:52px;text-align:center;font-weight:700;font-size:.88rem;color:#9ca3af;padding:.32rem .2rem;background:#f1f5f9;border-radius:6px;font-family:'Consolas','Courier New',monospace;display:block;margin:0 auto;transition:all .2s}
+.cfp-cell.active{color:#1e3358;background:#dbeafe}
+.td-notes{min-width:160px;padding:.28rem .45rem}
+.mnotes{width:100%;padding:.3rem .55rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.8rem;font-family:inherit;color:var(--text);background:#fff;transition:border-color .15s;resize:none;height:34px;min-height:34px;display:block}
+.mnotes:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.req-notes .mnotes{border-color:#f59e0b;background:#fffbf0}
+.total-row td{background:#eff6ff!important;border-top:2px solid #bfdbfe!important}
+.total-label{text-align:right;padding:.55rem 1rem .55rem .5rem;font-size:.85rem;font-weight:700;color:#1e40af}
+.total-cfp{text-align:center;font-size:1.05rem;font-weight:800;color:#9ca3af;font-family:'Consolas','Courier New',monospace;padding:.5rem .3rem;transition:color .2s}
+.total-cfp.active{color:#1e3358}
+.setup-card{background:#fafafa;border:1.5px dashed #d1d5db;border-radius:10px;padding:1.25rem 1.5rem;margin-bottom:1.5rem}
+.setup-card-title{font-weight:700;font-size:.95rem;color:var(--text);margin-bottom:.8rem;display:flex;align-items:center;gap:.5rem}
+.setup-steps{display:flex;flex-direction:column;gap:.6rem;margin-bottom:.9rem}
+.setup-step{display:flex;gap:.75rem;align-items:flex-start;font-size:.85rem;color:var(--text-2);line-height:1.65}
+.setup-num{width:22px;height:22px;min-width:22px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.71rem;font-weight:700;flex-shrink:0;margin-top:2px}
+.setup-code{background:#1e1e1e;color:#d4d4d4;padding:.55rem .9rem;border-radius:7px;font-family:'Consolas',monospace;font-size:.79rem;margin:.45rem 0;overflow-x:auto;white-space:pre;display:block}
+.submit-wrap{display:flex;align-items:center;gap:1.1rem;flex-wrap:wrap;margin-top:1.25rem}
+.spin{width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── MINI MEASUREMENT FORM ───────────────────────────────────────── */
+.mini-mform{background:#f8faff;border:1.5px solid #dbeafe;border-radius:10px;margin-top:1.25rem;margin-bottom:1.75rem;overflow:hidden}
+.mini-mform-hd{display:flex;align-items:center;justify-content:space-between;padding:.6rem 1rem;background:#eff6ff;border-bottom:1px solid #dbeafe;flex-wrap:wrap;gap:.5rem}
+.mini-mform-label{font-size:.8rem;font-weight:700;color:#1e3358}
+.mini-subtotal-wrap{font-size:.8rem;color:var(--text-muted)}
+.mini-subtotal{font-family:'Consolas',monospace;font-weight:700;color:#9ca3af;margin-left:.3rem;transition:color .2s}
+.mini-subtotal.active{color:#1e3358}
+.mmt{width:100%;border-collapse:collapse;font-size:.84rem}
+.mmt th{background:#1e3358;color:#fff;padding:.45rem .65rem;text-align:center;font-size:.77rem;font-weight:600;letter-spacing:.03em}
+.mmt th.th-l{text-align:left}
+.mmt td{padding:.35rem .55rem;border-bottom:1px solid #e8edf5;vertical-align:middle}
+.mmt tbody tr:last-child td{border-bottom:none}
+.mmt td.td-ep{font-family:'Consolas',monospace;font-weight:700;font-size:.82rem;color:#1e3358;white-space:nowrap}
+.mmt td.td-name{color:var(--text-2);font-size:.82rem}
+.mmt .fgrp-user    td{background:#fafcff}
+.mmt .fgrp-product td{background:#fffcf8}
+.mmt .fgrp-order   td{background:#fffafa}
+.mmt .fgrp-report  td{background:#f8fffe}
+.mmt .fgrp-fulfil  td{background:#fdfaff}
+.mmt .fgrp-batch   td{background:#f0fdf8}
+.mn{width:52px;padding:.3rem .2rem;border:1.5px solid #d1d5db;border-radius:6px;font-size:.88rem;text-align:center;font-family:'Consolas',monospace;background:#fff;-moz-appearance:textfield;display:block;margin:0 auto;transition:border-color .15s}
+.mn::-webkit-inner-spin-button,.mn::-webkit-outer-spin-button{-webkit-appearance:none}
+.mn:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.cs{width:52px;text-align:center;font-weight:700;font-size:.88rem;color:#9ca3af;background:#f1f5f9;border-radius:6px;font-family:'Consolas',monospace;display:block;margin:0 auto;padding:.3rem .2rem;transition:all .2s}
+.cs.active{color:#1e3358;background:#dbeafe}
+.nts{width:100%;padding:.3rem .55rem;border:1.5px solid #e5e7eb;border-radius:6px;font-size:.8rem;font-family:inherit;color:var(--text);background:#fff;resize:none;height:32px;min-height:32px;transition:border-color .15s,height .2s;display:block}
+.nts:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1);height:56px}
+.req-nts .nts{border-color:#f59e0b;background:#fffbf0}
+.submit-section{background:var(--surface);border-radius:12px;padding:1.75rem 2rem;margin-top:1.5rem;border:1px solid var(--border);box-shadow:0 1px 3px rgba(0,0,0,.05),0 4px 14px rgba(0,0,0,.04)}
+.cfp-total-row{display:flex;align-items:center;gap:1.5rem;margin-bottom:1.5rem;padding:1rem 1.25rem;background:#eff6ff;border-radius:10px;border:1px solid #bfdbfe;flex-wrap:wrap}
+.cfp-total-label{font-size:1rem;font-weight:700;color:#1e40af;flex:1}
+#cfp-total{font-size:2rem;font-weight:800;color:#9ca3af;font-family:'Consolas',monospace;transition:color .2s;min-width:60px;text-align:center}
+#cfp-total.active{color:#1e3358}
+.submit-participant{display:flex;align-items:center;gap:.85rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.submit-participant label{font-weight:600;font-size:.9rem;color:var(--text);white-space:nowrap}
+.submit-participant input{flex:1;min-width:200px;max-width:380px;padding:.52rem .85rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;font-family:inherit;color:var(--text);background:#fff;transition:border-color .15s}
+.submit-participant input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.submit-actions{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+#submit-btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:.72rem 2.5rem;font-size:.95rem;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;display:flex;align-items:center;gap:.65rem}
+#submit-btn:hover:not(:disabled){background:#1d4ed8;transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,99,235,.35)}
+#submit-btn:disabled{opacity:.5;cursor:not-allowed;transform:none;box-shadow:none}
+#submit-btn.loading .spin{display:block}
+#submit-btn.loading .btn-txt::after{content:'...'}
+#form-msg{font-size:.88rem;font-weight:600;display:none;padding:.65rem 1.1rem;border-radius:8px;line-height:1.5}
+#form-msg.show{display:block}
+#form-msg.ok{background:#f0fdf4;color:#14532d;border:1px solid #86efac}
+#form-msg.err{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+
+/* ── SUCCESS CARD ────────────────────────────────────────────────── */
+.success-card{display:none;flex-direction:column;align-items:center;justify-content:center;padding:2.25rem 2rem;gap:1rem;animation:fadeSlideUp .45s ease forwards}
+.success-card.show{display:flex}
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+.success-icon{width:68px;height:68px;border-radius:50%;background:#dcfce7;border:3px solid #16a34a;display:flex;align-items:center;justify-content:center;flex-shrink:0;animation:popIn .4s .15s cubic-bezier(.34,1.56,.64,1) both}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+.success-icon svg{width:34px;height:34px;stroke:#16a34a;stroke-width:2.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.success-icon svg path{stroke-dasharray:40;stroke-dashoffset:40;animation:drawCheck .35s .5s ease forwards}
+@keyframes drawCheck{to{stroke-dashoffset:0}}
+.success-title{font-size:1.25rem;font-weight:800;color:#14532d;text-align:center}
+.success-sub{font-size:.9rem;color:#166534;text-align:center;opacity:.8}
+
+/* ── BACK TO TOP ─────────────────────────────────────────────────── */
+#btt{position:fixed;bottom:1.75rem;right:1.75rem;background:var(--accent);color:#fff;border:none;border-radius:10px;width:42px;height:42px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .3s,transform .2s;box-shadow:0 4px 14px rgba(37,99,235,.4)}
+#btt.show{opacity:1}
+#btt:hover{transform:translateY(-2px)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════ SIDEBAR ══════════════════════════════ -->
+<aside id="sidebar">
+  <div id="sb-header">
+    <div id="sb-logo">
+      <div id="sb-logo-mark">CFP</div>
+      <div class="logo">COSMIC</div>
+    </div>
+    <div class="sub">Caso Práctico · OrderFlow</div>
+  </div>
+  <nav>
+    <div class="ng">Contenido</div>
+    <a href="#descripcion">Descripción</a>
+    <a href="#modelos">Modelos y Contexto</a>
+    <a href="#alcance">Alcance — 17 endpoints</a>
+    <div class="ng">Código Fuente</div>
+    <a href="#ctrl-user"   class="sub">UserController</a>
+    <a href="#ctrl-prod"   class="sub">ProductController</a>
+    <a href="#ctrl-order"  class="sub">OrderController</a>
+    <a href="#ctrl-report" class="sub">ReportController</a>
+    <a href="#ctrl-fulfil" class="sub">FulfillmentController</a>
+    <a href="#ctrl-batch"  class="sub">BatchController</a>
+    <a href="#formulario" class="sub">Enviar Medición</a>
+  </nav>
+</aside>
+
+<!-- ══════════════════════════ MOBILE ════════════════════════════════ -->
+<button id="menu-btn" aria-label="Abrir menú">&#9776;</button>
+<div id="overlay"></div>
+
+<!-- ══════════════════════════ MAIN ═════════════════════════════════ -->
+<div id="page">
+<div id="content">
+
+  <div id="portada">
+    <div class="portada-label">Estudio Empírico · Medición de Software</div>
+    <h1>Caso Práctico</h1>
+    <div class="portada-system">Sistema OrderFlow</div>
+    <div class="portada-divider"></div>
+    <div class="portada-desc">Medición Manual de Puntos de Función COSMIC (CFP)</div>
+    <div class="portada-meta">
+      <div class="meta-item"><div class="meta-label">Tecnología</div><div class="meta-val">Spring Boot · JPA · OpenFeign</div></div>
+      <div class="meta-item"><div class="meta-label">Alcance</div><div class="meta-val">17 endpoints REST</div></div>
+      <div class="meta-item"><div class="meta-label">Modalidad</div><div class="meta-val">Solo lectura · No compilar</div></div>
+      <div class="meta-item"><div class="meta-label">Estándar</div><div class="meta-val">COSMIC ISO/IEC 19761</div></div>
+    </div>
+  </div>
+
+  <!-- ─── 1. DESCRIPCIÓN ────────────────────────────────────────────── -->
+  <section class="section scroll-target" id="descripcion">
+    <div class="section-title">1. Descripción del Sistema</div>
+    <p><strong>OrderFlow</strong> es un microservicio Spring Boot que gestiona usuarios, productos y pedidos de una tienda online. Expone una API REST con cinco controladores independientes.</p>
+    <ul class="list">
+      <li><strong>Tecnología:</strong> Spring Boot con Spring Data JPA y OpenFeign para comunicación entre servicios.</li>
+      <li><strong>Dominio:</strong> Usuarios, Productos, Pedidos, Reportes y Fulfillment de una tienda online.</li>
+      <li><strong>Arquitectura:</strong> Controladores REST → Repositorios JPA / Feign Clients → Base de datos / Servicios externos.</li>
+      <li><strong>Tu tarea:</strong> Medir el CFP de cada uno de los 17 endpoints usando el video tutorial y la CheatSheet COSMIC.</li>
+    </ul>
+    <div class="banner b-blue">No necesitas ejecutar ni compilar el proyecto. Analiza el código fuente directamente en esta página.</div>
+    <div class="banner b-green" style="margin-top:.75rem">Al final de cada controlador encontrarás una tabla donde debes registrar tu medición (E, X, L, W y CFP). Al terminar todos los controladores, introduce tu nombre y envía los resultados.</div>
+  </section>
+
+  <!-- ─── 2. MODELOS ───────────────────────────────────────────────── -->
+  <section class="section scroll-target" id="modelos">
+    <div class="section-title">2. Modelos y Contexto <span style="font-weight:400;font-size:.8rem;color:#888">— no medir</span></div>
+    <p>Los siguientes modelos, repositorios y cliente Feign son <strong>contexto</strong> para entender el código de los controladores. No forman parte del alcance de medición.</p>
+    <div class="banner b-orange" style="margin-bottom:.75rem">Estas son las entidades, repositorios y clientes que utiliza la aplicación que vas a medir. <strong>No es necesario medirlos</strong>: están aquí únicamente como referencia para que comprendas la estructura de datos cuando analices los controladores.</div>
+    <div id="ctx-code"></div>
+  </section>
+
+  <!-- ─── 3. ALCANCE ───────────────────────────────────────────────── -->
+  <section class="section scroll-target" id="alcance">
+    <div class="section-title">3. Alcance de Medición — 17 Endpoints</div>
+    <p>Debes medir los siguientes 17 endpoints REST. Cada uno es un proceso funcional independiente.</p>
+    <table class="ep-table">
+      <thead><tr><th>ID</th><th>Controlador</th><th>Método</th><th>Ruta</th></tr></thead>
+      <tbody>
+        <tr class="grp-user">  <td class="ep-id">EP-01</td><td>UserController</td>        <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/users</td></tr>
+        <tr class="grp-user">  <td class="ep-id">EP-02</td><td>UserController</td>        <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/users/{id}</td></tr>
+        <tr class="grp-user">  <td class="ep-id">EP-03</td><td>UserController</td>        <td><span class="mth m-POST">POST</span></td>  <td class="ep-route">/api/users</td></tr>
+        <tr class="grp-user">  <td class="ep-id">EP-04</td><td>UserController</td>        <td><span class="mth m-DELETE">DELETE</span></td><td class="ep-route">/api/users/{id}</td></tr>
+        <tr class="grp-product"><td class="ep-id">EP-05</td><td>ProductController</td>     <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/products</td></tr>
+        <tr class="grp-product"><td class="ep-id">EP-06</td><td>ProductController</td>     <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/products/{id}</td></tr>
+        <tr class="grp-product"><td class="ep-id">EP-07</td><td>ProductController</td>     <td><span class="mth m-POST">POST</span></td>  <td class="ep-route">/api/products</td></tr>
+        <tr class="grp-product"><td class="ep-id">EP-08</td><td>ProductController</td>     <td><span class="mth m-PUT">PUT</span></td>    <td class="ep-route">/api/products/{id}</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-09</td><td>OrderController</td>       <td><span class="mth m-POST">POST</span></td>  <td class="ep-route">/api/orders</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-10</td><td>OrderController</td>       <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/orders/user/{userId}</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-11</td><td>OrderController</td>       <td><span class="mth m-PATCH">PATCH</span></td><td class="ep-route">/api/orders/{id}/status</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-12</td><td>OrderController</td>       <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/orders/search</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-13</td><td>OrderController</td>       <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/orders/{id}/audit</td></tr>
+        <tr class="grp-order"> <td class="ep-id">EP-14</td><td>OrderController</td>       <td><span class="mth m-PATCH">PATCH</span></td><td class="ep-route">/api/orders/confirm-all</td></tr>
+        <tr class="grp-report"><td class="ep-id">EP-15</td><td>ReportController</td>      <td><span class="mth m-GET">GET</span></td>   <td class="ep-route">/api/reports/orders/export</td></tr>
+        <tr class="grp-fulfil"><td class="ep-id">EP-16</td><td>FulfillmentController</td> <td><span class="mth m-POST">POST</span></td>  <td class="ep-route">/api/fulfillment/orders</td></tr>
+        <tr class="grp-batch"> <td class="ep-id">EP-17</td><td>BatchController</td>       <td><span class="mth m-POST">POST</span></td>  <td class="ep-route">/api/batch/orders/process</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- ─── 4. CÓDIGO ───────────────────────────────────────────────── -->
+  <section class="section scroll-target" id="codigo">
+    <div class="section-title">4. Código Fuente de los Controladores</div>
+    <p>Analiza cada endpoint e identifica los movimientos de datos (E, X, L, W) con el video tutorial y la CheatSheet.</p>
+    <div id="ctrl-sections"></div>
+  </section>
+
+</div><!-- /content -->
+</div><!-- /page -->
+<button id="btt" title="Volver arriba">↑</button>
+
+<!-- ════════════════ JAVA CODE (texto plano, sin interpolación JS) ═══ -->
+
+<script id="c-models" type="text/plain">
+// ─── User.java ───────────────────────────────────────────────────
+@Entity
+public class User {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
+    private String phone;
+    // getters y setters omitidos
+}
+
+// ─── Product.java ────────────────────────────────────────────────
+@Entity
+public class Product {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private Double price;
+    private Integer stock;
+    // getters y setters omitidos
+}
+
+// ─── Order.java ──────────────────────────────────────────────────
+@Entity
+public class Order {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Long userId;
+    private Long productId;
+    private Integer quantity;
+    private Double total;
+    private String status;  // "PENDING", "CONFIRMED", "CANCELLED"
+    // getters y setters omitidos
+}
+
+// ─── OrderRequest.java  (DTO de entrada) ─────────────────────────
+public class OrderRequest {
+    private Long userId;
+    private Long productId;
+    private Integer quantity;
+    // getters y setters omitidos
+}
+
+// ─── Repositorios JPA ────────────────────────────────────────────
+public interface UserRepository    extends JpaRepository<User, Long> {}
+public interface ProductRepository extends JpaRepository<Product, Long> {}
+
+public interface OrderRepository   extends JpaRepository<Order, Long> {
+    List<Order> findByUserId(Long userId);    // SELECT ... WHERE user_id = ?
+    List<Order> findByStatus(String status);  // SELECT ... WHERE status  = ?
+}
+
+// ─── InventoryClient.java  (Feign Client) ────────────────────────
+@FeignClient(name = "inventory-service", url = "${inventory.service.url}")
+public interface InventoryClient {
+
+    // Consulta el stock disponible en el microservicio de inventario
+    @GetMapping("/api/inventory/{productId}/stock")
+    Integer getAvailableStock(@PathVariable Long productId);
+
+    // Reserva stock en el microservicio de inventario
+    @PostMapping("/api/inventory/{productId}/reserve")
+    void reserveStock(@PathVariable Long productId, @RequestBody Integer quantity);
+}
+</script>
+
+<script id="c-user" type="text/plain">
+@RestController
+@RequestMapping("/api/users")
+public class UserController {
+
+    private final UserRepository userRepository;
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public UserController(UserRepository userRepository) {
+        this.userRepository = userRepository;
+    }
+
+    // ─── EP-01: GET /api/users ──────────────────────────────────────
+    // Retorna la lista completa de usuarios.
+    @GetMapping
+    public ResponseEntity<List<User>> getAllUsers() {
+        List<User> users = userRepository.findAll();
+        return ResponseEntity.ok(users);
+    }
+
+    // ─── EP-02: GET /api/users/{id} ─────────────────────────────────
+    // Retorna un usuario por ID. Si no existe, retorna 404.
+    @GetMapping("/{id}")
+    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        return ResponseEntity.ok(user);
+    }
+
+    // ─── EP-03: POST /api/users ─────────────────────────────────────
+    // Crea un nuevo usuario con los datos del body.
+    @PostMapping
+    public ResponseEntity<User> createUser(@RequestBody User user) {
+        User saved = userRepository.save(user);
+        return ResponseEntity.status(201).body(saved);
+    }
+
+    // ─── EP-04: DELETE /api/users/{id} ──────────────────────────────
+    // Elimina el usuario identificado por id.
+    // Primero verifica si existe; si no, retorna 404.
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
+        User user = userRepository.findById(id).orElse(null);
+        if (user == null) {
+            return ResponseEntity.notFound().build();
+        }
+        userRepository.delete(user);
+        return ResponseEntity.ok().build();
+    }
+}
+</script>
+
+<script id="c-product" type="text/plain">
+@RestController
+@RequestMapping("/api/products")
+public class ProductController {
+
+    private final ProductRepository productRepository;
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public ProductController(ProductRepository productRepository) {
+        this.productRepository = productRepository;
+    }
+
+    // ─── EP-05: GET /api/products ───────────────────────────────────
+    // Retorna el catalogo completo de productos.
+    @GetMapping
+    public ResponseEntity<List<Product>> getAllProducts() {
+        return ResponseEntity.ok(productRepository.findAll());
+    }
+
+    // ─── EP-06: GET /api/products/{id} ──────────────────────────────
+    // Retorna un producto por ID usando encadenamiento funcional.
+    // Si no existe, retorna 404.
+    @GetMapping("/{id}")
+    public ResponseEntity<Product> getProductById(@PathVariable Long id) {
+        return productRepository.findById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ─── EP-07: POST /api/products ──────────────────────────────────
+    // Crea un nuevo producto. Valida precio y stock antes de guardar.
+    @PostMapping
+    public ResponseEntity<Product> createProduct(@RequestBody Product product) {
+        if (product.getPrice() == null || product.getPrice() <= 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        if (product.getStock() == null || product.getStock() < 0) {
+            return ResponseEntity.badRequest().build();
+        }
+        product.setName(product.getName().trim().toUpperCase());
+
+        Product saved = productRepository.save(product);
+        return ResponseEntity.status(201).body(saved);
+    }
+
+    // ─── EP-08: PUT /api/products/{id} ──────────────────────────────
+    // Actualiza todos los campos de un producto existente.
+    @PutMapping("/{id}")
+    public ResponseEntity<Product> updateProduct(
+            @PathVariable Long id,
+            @RequestBody Product productDetails) {
+
+        Product product = productRepository.findById(id).orElse(null);
+        if (product == null) {
+            return ResponseEntity.notFound().build();
+        }
+        product.setName(productDetails.getName());
+        product.setPrice(productDetails.getPrice());
+        product.setStock(productDetails.getStock());
+
+        Product updated = productRepository.save(product);
+        return ResponseEntity.ok(updated);
+    }
+}
+</script>
+
+<script id="c-order" type="text/plain">
+@RestController
+@RequestMapping("/api/orders")
+public class OrderController {
+
+    private final OrderRepository   orderRepository;
+    private final UserRepository    userRepository;
+    private final ProductRepository productRepository;
+    private static final Logger log = LoggerFactory.getLogger(OrderController.class);
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public OrderController(OrderRepository orderRepository,
+                           UserRepository userRepository,
+                           ProductRepository productRepository) {
+        this.orderRepository   = orderRepository;
+        this.userRepository    = userRepository;
+        this.productRepository = productRepository;
+    }
+
+    // ─── EP-09: POST /api/orders ────────────────────────────────────
+    // Crea un pedido. Valida usuario y producto antes de guardar.
+    // Calcula el total (precio x cantidad) internamente.
+    @PostMapping
+    public ResponseEntity<Order> createOrder(@RequestBody OrderRequest request) {
+        User user = userRepository.findById(request.getUserId()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Product product = productRepository.findById(request.getProductId()).orElse(null);
+        if (product == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        Order order = new Order();
+        order.setUserId(request.getUserId());
+        order.setProductId(request.getProductId());
+        order.setQuantity(request.getQuantity());
+        order.setTotal(product.getPrice() * request.getQuantity()); // calculo interno
+        order.setStatus("PENDING");
+
+        Order saved = orderRepository.save(order);
+        return ResponseEntity.status(201).body(saved);
+    }
+
+    // ─── EP-10: GET /api/orders/user/{userId} ───────────────────────
+    // Retorna todos los pedidos de un usuario especifico.
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<List<Order>> getOrdersByUser(@PathVariable Long userId) {
+        List<Order> orders = orderRepository.findByUserId(userId);
+        return ResponseEntity.ok(orders);
+    }
+
+    // ─── EP-11: PATCH /api/orders/{id}/status ───────────────────────
+    // Actualiza el estado de un pedido. Valida la transicion de estados.
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<Order> updateOrderStatus(
+            @PathVariable Long id,
+            @RequestParam String status) {
+
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!status.equals("PENDING") && !status.equals("CONFIRMED")
+                && !status.equals("CANCELLED")) {
+            return ResponseEntity.badRequest().build();
+        }
+        if ("CANCELLED".equals(order.getStatus())) {
+            return ResponseEntity.badRequest().build();
+        }
+        order.setStatus(status);
+        Order updated = orderRepository.save(order);
+        return ResponseEntity.ok(updated);
+    }
+
+    // ─── EP-12: GET /api/orders/search ──────────────────────────────
+    // Busca pedidos por estado. Permite filtrar adicionalmente por usuario.
+    @GetMapping("/search")
+    public ResponseEntity<List<Order>> searchOrders(
+            @RequestParam String status,
+            @RequestParam(required = false) Long userId) {
+
+        List<Order> allOrders = orderRepository.findByStatus(status);
+
+        // Aplica el filtro adicional sobre la lista obtenida
+        List<Order> filtered = allOrders.stream()
+                .filter(o -> userId == null || o.getUserId().equals(userId))
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(filtered);
+    }
+
+    // ─── EP-13: GET /api/orders/{id}/audit ──────────────────────────
+    // Retorna los detalles de un pedido con trazabilidad completa.
+    @GetMapping("/{id}/audit")
+    public ResponseEntity<Order> getOrderAudit(@PathVariable Long id) {
+        log.info("AUDIT: consultando pedido id={}", id);
+        Order order = orderRepository.findById(id).orElse(null);
+        if (order == null) {
+            log.warn("AUDIT: pedido no encontrado id={}", id);
+            return ResponseEntity.notFound().build();
+        }
+        log.info("AUDIT: pedido encontrado userId={} status={}",
+                 order.getUserId(), order.getStatus());
+        return ResponseEntity.ok(order);
+    }
+
+    // ─── EP-14: PATCH /api/orders/confirm-all ───────────────────────
+    // Confirma todos los pedidos PENDIENTES de un usuario.
+    @PatchMapping("/confirm-all")
+    public ResponseEntity<List<Order>> confirmAllOrders(@RequestParam Long userId) {
+        List<Order> orders = orderRepository.findByUserId(userId);
+        List<Order> confirmed = orders.stream()
+            .filter(o -> "PENDING".equals(o.getStatus()))
+            .map(o -> {
+                o.setStatus("CONFIRMED");
+                return orderRepository.save(o);
+            })
+            .collect(Collectors.toList());
+        return ResponseEntity.ok(confirmed);
+    }
+}
+</script>
+
+<script id="c-report" type="text/plain">
+@RestController
+@RequestMapping("/api/reports")
+public class ReportController {
+
+    private final OrderRepository orderRepository;
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public ReportController(OrderRepository orderRepository) {
+        this.orderRepository = orderRepository;
+    }
+
+    // ─── EP-15: GET /api/reports/orders/export ──────────────────────
+    // Exporta los pedidos de un mes a un archivo CSV en el servidor.
+    @GetMapping("/orders/export")
+    public ResponseEntity<String> exportOrdersToFile(@RequestParam String month) {
+        List<Order> orders = orderRepository.findAll();
+        String filePath = "exports/orders_" + month + ".csv";
+        try (FileWriter writer = new FileWriter(filePath)) {
+            writer.write("id,userId,productId,quantity,total,status\n");
+            for (Order o : orders) {
+                writer.write(o.getId() + "," + o.getUserId() + "," +
+                             o.getProductId() + "," + o.getQuantity() + "," +
+                             o.getTotal() + "," + o.getStatus() + "\n");
+            }
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
+        return ResponseEntity.ok("Exportado: " + filePath);
+    }
+}
+</script>
+
+<script id="c-fulfil" type="text/plain">
+@RestController
+@RequestMapping("/api/fulfillment")
+public class FulfillmentController {
+
+    private final OrderRepository orderRepository;
+    private final InventoryClient inventoryClient;
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public FulfillmentController(OrderRepository orderRepository,
+                                 InventoryClient inventoryClient) {
+        this.orderRepository = orderRepository;
+        this.inventoryClient = inventoryClient;
+    }
+
+    // ─── EP-16: POST /api/fulfillment/orders ────────────────────────
+    // Crea un pedido verificando stock con el microservicio de inventario.
+    // Recibe datos del microservicio externo y le envia datos de vuelta.
+    @PostMapping("/orders")
+    public ResponseEntity<Order> createFulfilledOrder(@RequestBody OrderRequest request) {
+
+        // Recibe datos del microservicio de inventario (dato entra al proceso)
+        Integer availableStock = inventoryClient.getAvailableStock(request.getProductId());
+        if (availableStock < request.getQuantity()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        // Envia datos al microservicio de inventario (dato sale del proceso)
+        inventoryClient.reserveStock(request.getProductId(), request.getQuantity());
+
+        Order order = new Order();
+        order.setUserId(request.getUserId());
+        order.setProductId(request.getProductId());
+        order.setQuantity(request.getQuantity());
+        order.setStatus("CONFIRMED");
+
+        Order saved = orderRepository.save(order);
+        return ResponseEntity.status(201).body(saved);
+    }
+}
+</script>
+
+<script id="c-batch" type="text/plain">
+@RestController
+@RequestMapping("/api/batch")
+public class BatchController {
+
+    private final OrderRepository   orderRepository;
+    private final ProductRepository productRepository;
+    private final InventoryClient   inventoryClient;
+
+    // Inyeccion de dependencias por constructor (buena practica)
+    public BatchController(OrderRepository orderRepository,
+                           ProductRepository productRepository,
+                           InventoryClient inventoryClient) {
+        this.orderRepository   = orderRepository;
+        this.productRepository = productRepository;
+        this.inventoryClient   = inventoryClient;
+    }
+
+    // ─── EP-17: POST /api/batch/orders/process ──────────────────────
+    // Recibe una lista de IDs de pedidos y los procesa en bloque:
+    // verifica producto, consulta stock externo, reserva inventario
+    // y confirma cada pedido pendiente con stock suficiente.
+    @PostMapping("/orders/process")
+    public ResponseEntity<List<Order>> processBatch(
+            @RequestBody List<Long> orderIds) {
+
+        List<Order> results = orderIds.stream()
+            .map(id -> orderRepository.findById(id).orElse(null))
+            .filter(o -> o != null && "PENDING".equals(o.getStatus()))
+            .map(o -> {
+
+                // Lee el producto asociado al pedido desde la base de datos
+                Product product = productRepository
+                        .findById(o.getProductId()).orElse(null);
+                if (product == null) {
+                    return null;
+                }
+
+                // Recibe el stock disponible desde el servicio de inventario
+                Integer stock = inventoryClient
+                        .getAvailableStock(o.getProductId());
+                if (stock < o.getQuantity()) {
+                    return null;
+                }
+
+                // Envia la reserva de stock al servicio de inventario
+                inventoryClient.reserveStock(
+                        o.getProductId(), o.getQuantity());
+
+                // Confirma el pedido y lo persiste en la base de datos
+                o.setStatus("CONFIRMED");
+                return orderRepository.save(o);
+            })
+            .filter(o -> o != null)
+            .collect(Collectors.toList());
+
+        return ResponseEntity.ok(results);
+    }
+}
+</script>
+
+<!-- ════════════════════════════ SCRIPT ══════════════════════════════ -->
+<script>
+// ── SYNTAX HIGHLIGHTER ─────────────────────────────────────────────
+const KW = new Set(['public','private','protected','static','final','void',
+  'class','interface','new','return','if','else','null','true','false',
+  'this','extends','implements','throws','try','catch','for','while',
+  'import','package','int','long','boolean','double','Integer']);
+const TYPES = new Set(['Long','String','List','Boolean','Double',
+  'ResponseEntity','Order','User','Product','OrderRequest','InventoryClient',
+  'OrderRepository','UserRepository','ProductRepository','FileWriter',
+  'IOException','Logger','LoggerFactory','Collectors','JpaRepository',
+  'Optional','Map','HashMap','GenerationType']);
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function sp(c,s){return '<span class="'+c+'">'+esc(s)+'</span>'}
+
+function highlight(src){
+  let out='',i=0,n=src.length;
+  while(i<n){
+    if(src[i]==='/'&&src[i+1]==='/'){
+      let j=i; while(j<n&&src[j]!=='\n')j++;
+      out+=sp('cm',src.slice(i,j)); i=j;
+    } else if(src[i]==='"'){
+      let j=i+1;
+      while(j<n&&src[j]!=='"'&&src[j]!=='\n'){if(src[j]==='\\')j++;j++;}
+      if(j<n&&src[j]==='"')j++;
+      out+=sp('st',src.slice(i,j)); i=j;
+    } else if(src[i]==='@'){
+      let j=i+1; while(j<n&&/\w/.test(src[j]))j++;
+      out+=sp('an',src.slice(i,j)); i=j;
+    } else if(/[a-zA-Z_$]/.test(src[i])){
+      let j=i; while(j<n&&/[\w$]/.test(src[j]))j++;
+      const w=src.slice(i,j);
+      out+=KW.has(w)?sp('kw',w):TYPES.has(w)?sp('tp',w):esc(w); i=j;
+    } else if(/\d/.test(src[i])){
+      let j=i; while(j<n&&/[\d.]/.test(src[j]))j++;
+      out+=sp('nm',src.slice(i,j)); i=j;
+    } else { out+=esc(src[i++]); }
+  }
+  return out;
+}
+
+function buildCode(raw, filename, epLabel){
+  const lines=raw.split('\n');
+  let s=0,e=lines.length-1;
+  while(s<e&&!lines[s].trim())s++;
+  while(e>s&&!lines[e].trim())e--;
+  const html=lines.slice(s,e+1).map((l,i)=>
+    '<div class="cl"><span class="ln">'+(i+1)+'</span><span class="lc">'+highlight(l)+'</span></div>'
+  ).join('');
+  return '<div class="code-wrap">'+
+    '<div class="code-tab">'+
+    '<div class="code-tab-left">'+
+    '<div class="mac-dots"><span class="mac-dot mac-dot-r"></span><span class="mac-dot mac-dot-y"></span><span class="mac-dot mac-dot-g"></span></div>'+
+    '<span class="code-tab-name">'+esc(filename)+'</span>'+
+    '</div>'+
+    '<div class="code-tab-ep">'+esc(epLabel)+'</div>'+
+    '</div>'+
+    '<div class="code-body"><pre>'+html+'</pre></div>'+
+    '</div>';
+}
+
+// ── CONTROLLERS DATA ───────────────────────────────────────────────
+const CTRLS=[
+  {id:'ctrl-user',
+   title:'4.1  UserController',
+   banner:{cls:'b-blue',txt:'Gestiona las operaciones sobre usuarios: listar todos, obtener por ID, crear y eliminar.'},
+   file:'UserController.java', eps:'EP-01 a EP-04', cid:'c-user'},
+  {id:'ctrl-prod',
+   title:'4.2  ProductController',
+   banner:{cls:'b-blue',txt:'Gestiona el catálogo de productos: listar, obtener por ID, crear y actualizar. Las transformaciones internas de datos dentro del propio controlador NO generan movimientos COSMIC.'},
+   file:'ProductController.java', eps:'EP-05 a EP-08', cid:'c-product'},
+  {id:'ctrl-order',
+   title:'4.3  OrderController',
+   banner:{cls:'b-blue',txt:'Gestiona pedidos con acceso a múltiples repositorios. Algunos endpoints aplican filtros y operaciones sobre listas de resultados.'},
+   file:'OrderController.java', eps:'EP-09 a EP-14', cid:'c-order'},
+  {id:'ctrl-report',
+   title:'4.4  ReportController',
+   banner:{cls:'b-blue',txt:'Exporta datos de pedidos a un archivo CSV en el servidor. Ten en cuenta el tipo de almacenamiento destino al identificar los movimientos de datos.'},
+   file:'ReportController.java', eps:'EP-15', cid:'c-report'},
+  {id:'ctrl-fulfil',
+   title:'4.5  FulfillmentController',
+   banner:{cls:'b-blue',txt:'Interactúa con un servicio externo (InventoryClient) para consultar y reservar stock antes de crear el pedido.'},
+   file:'FulfillmentController.java', eps:'EP-16', cid:'c-fulfil'},
+  {id:'ctrl-batch',
+   title:'4.6  BatchController',
+   banner:{cls:'b-blue',txt:'Procesa un lote de pedidos combinando acceso a múltiples repositorios y comunicación con servicios externos dentro de operaciones encadenadas.'},
+   file:'BatchController.java', eps:'EP-17', cid:'c-batch'},
+];
+
+// ── RENDER ─────────────────────────────────────────────────────────
+function renderAll(){
+  // Context/models block
+  const modRaw=document.getElementById('c-models').textContent;
+  document.getElementById('ctx-code').innerHTML=
+    '<div class="banner b-blue" style="margin-bottom:.75rem">Solo contexto — no incluidos en el alcance de medición.</div>'+
+    buildCode(modRaw,'Modelos, Repositorios y InventoryClient.java','Contexto — no medir');
+
+  // Controllers
+  const html=CTRLS.map(c=>{
+    const raw=document.getElementById(c.cid).textContent;
+    return '<div id="'+c.id+'" class="ctrl-card scroll-target">'+
+      '<div class="ctrl-card-head">'+
+      '<div class="ctrl-card-title">'+esc(c.title)+'</div>'+
+      '</div>'+
+      '<div class="ctrl-card-body">'+
+      '<div class="banner '+c.banner.cls+'">'+c.banner.txt+'</div>'+
+      buildCode(raw,c.file,c.eps)+
+      '</div>'+
+      '</div>';
+  }).join('');
+  document.getElementById('ctrl-sections').innerHTML=html;
+}
+
+// ── NAVIGATION ─────────────────────────────────────────────────────
+function setupNav(){
+  const links=[...document.querySelectorAll('#sidebar nav a')];
+  const targets=links.map(a=>({a,el:document.querySelector(a.getAttribute('href'))})).filter(x=>x.el);
+  function upd(){
+    const y=window.scrollY+100;
+    let cur=targets[0];
+    for(const t of targets) if(t.el.offsetTop<=y) cur=t;
+    links.forEach(l=>l.classList.remove('active'));
+    if(cur) cur.a.classList.add('active');
+  }
+  window.addEventListener('scroll',upd,{passive:true});
+  upd();
+}
+
+// ── BACK TO TOP ────────────────────────────────────────────────────
+function setupBtt(){
+  const btn=document.getElementById('btt');
+  window.addEventListener('scroll',()=>{
+    btn.classList.toggle('show',window.scrollY>400);
+  },{passive:true});
+  btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+}
+
+function setupMobileMenu(){
+  const btn=document.getElementById('menu-btn');
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('overlay');
+  function open(){sb.classList.add('open');ov.classList.add('open')}
+  function close(){sb.classList.remove('open');ov.classList.remove('open')}
+  btn.addEventListener('click',open);
+  ov.addEventListener('click',close);
+  // Close sidebar when a nav link is clicked on mobile
+  sb.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{
+    if(window.innerWidth<=900) close();
+  }));
+}
+
+// ── FORM CONFIG ────────────────────────────────────────────────────
+const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyslPK1-qCTkjyrstjkeLpiYtBciABUjxx9Ux5-eXReRlYrzdGQD9KfiOoMFuMkJ5Je/exec';
+
+const EPS_FORM = [
+  {id:'EP-01', name:'getAllUsers',          grp:'user',    req:false},
+  {id:'EP-02', name:'getUserById',          grp:'user',    req:false},
+  {id:'EP-03', name:'createUser',           grp:'user',    req:false},
+  {id:'EP-04', name:'deleteUser',           grp:'user',    req:false},
+  {id:'EP-05', name:'getAllProducts',        grp:'product', req:false},
+  {id:'EP-06', name:'getProductById',        grp:'product', req:false},
+  {id:'EP-07', name:'createProduct',         grp:'product', req:false},
+  {id:'EP-08', name:'updateProduct',         grp:'product', req:false},
+  {id:'EP-09', name:'createOrder',           grp:'order',   req:false},
+  {id:'EP-10', name:'getOrdersByUser',       grp:'order',   req:false},
+  {id:'EP-11', name:'updateOrderStatus',     grp:'order',   req:false},
+  {id:'EP-12', name:'searchOrders',          grp:'order',   req:false},
+  {id:'EP-13', name:'getOrderAudit',         grp:'order',   req:false},
+  {id:'EP-14', name:'confirmAllOrders',      grp:'order',   req:false},
+  {id:'EP-15', name:'exportOrdersToFile',    grp:'report',  req:false},
+  {id:'EP-16', name:'createFulfilledOrder',  grp:'fulfil',  req:false},
+  {id:'EP-17', name:'processBatch',          grp:'batch',   req:false},
+];
+
+function epKey(id){ return id.replace('-','').toLowerCase(); } // 'EP-01' → 'ep01'
+
+// Maps each controller card ID to the EPS_FORM indices it contains
+const CTRL_EP_MAP = {
+  'ctrl-user':   [0,1,2,3],
+  'ctrl-prod':   [4,5,6,7],
+  'ctrl-order':  [8,9,10,11,12,13],
+  'ctrl-report': [14],
+  'ctrl-fulfil': [15],
+  'ctrl-batch':  [16],
+};
+
+function buildMForm(){
+  // 1. Inject a mini measurement table after each controller card
+  Object.entries(CTRL_EP_MAP).forEach(([ctrlId, epIdxs])=>{
+    const card = document.getElementById(ctrlId);
+    if(!card) return;
+
+    const rows = epIdxs.map(i=>{
+      const ep = EPS_FORM[i];
+      const k  = epKey(ep.id);
+      const mark = ep.req ? '<span style="color:#b45309;margin-left:2px" title="Notas obligatorias">●</span>' : '';
+      return `<tr class="fgrp-${ep.grp}${ep.req?' req-nts':''}">
+        <td class="td-ep">${ep.id}${mark}</td>
+        <td class="td-name">${ep.name}</td>
+        <td><input class="mn" type="number" id="${k}-e" min="0" max="9" placeholder="0" data-i="${i}"></td>
+        <td><input class="mn" type="number" id="${k}-x" min="0" max="9" placeholder="0" data-i="${i}"></td>
+        <td><input class="mn" type="number" id="${k}-l" min="0" max="9" placeholder="0" data-i="${i}"></td>
+        <td><input class="mn" type="number" id="${k}-w" min="0" max="9" placeholder="0" data-i="${i}"></td>
+        <td><span class="cs" id="${k}-cfp">—</span></td>
+        <td><textarea class="nts" id="${k}-notes" rows="1"
+          placeholder="Opcional..."
+        ></textarea></td>
+      </tr>`;
+    }).join('');
+
+    card.insertAdjacentHTML('afterend',
+      `<div class="mini-mform">
+        <div class="mini-mform-hd">
+          <span class="mini-mform-label">Mide este controlador</span>
+          <span class="mini-subtotal-wrap">Subtotal CFP: <span class="mini-subtotal" id="sub-${ctrlId}">—</span></span>
+        </div>
+        <table class="mmt">
+          <thead><tr>
+            <th class="th-l">Endpoint</th>
+            <th class="th-l">Proceso</th>
+            <th>E</th><th>X</th><th>L</th><th>W</th>
+            <th>CFP</th>
+            <th class="th-l" style="min-width:190px">Notas / Dudas</th>
+          </tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`
+    );
+  });
+
+  // 2. Inject submit section after #ctrl-sections
+  document.getElementById('ctrl-sections').insertAdjacentHTML('afterend',
+    `<div class="submit-section scroll-target" id="formulario">
+      <div class="cfp-total-row">
+        <span class="cfp-total-label">CFP Total del Proyecto</span>
+        <span id="cfp-total">—</span>
+      </div>
+      <div class="submit-participant">
+        <label for="f-nombre">Escribe tu nombre para enviar</label>
+        <input type="text" id="f-nombre" placeholder="Escribe aquí tu nombre completo o iniciales" autocomplete="off" maxlength="60">
+      </div>
+      <div class="submit-actions">
+        <button id="submit-btn" disabled onclick="submitForm()">
+          <span class="spin"></span>
+          <span class="btn-txt">Enviar medición</span>
+        </button>
+        <div id="form-msg"></div>
+      </div>
+      <div class="success-card" id="success-card">
+        <div class="success-icon">
+          <svg viewBox="0 0 24 24"><path d="M4 13l5 5L20 7"/></svg>
+        </div>
+        <div class="success-title">¡Medición enviada correctamente!</div>
+        <div class="success-sub">Gracias por participar en el estudio. Tus datos han sido registrados.</div>
+      </div>
+    </div>`
+  );
+
+  // 3. Attach listeners
+  document.querySelectorAll('.mn').forEach(inp=>{
+    inp.addEventListener('input',()=>{
+      const i = +inp.dataset.i;
+      calcRow(i);
+      calcSubtotal(i);
+      calcTotal();
+      checkReady();
+    });
+  });
+  document.getElementById('f-nombre').addEventListener('input', checkReady);
+  document.querySelectorAll('.nts').forEach(el=>el.addEventListener('input', checkReady));
+}
+
+function getN(id){
+  const v = parseInt(document.getElementById(id)?.value,10);
+  return (isNaN(v)||v<0) ? 0 : v;
+}
+
+function calcRow(i){
+  const k = epKey(EPS_FORM[i].id);
+  const cfp = getN(k+'-e')+getN(k+'-x')+getN(k+'-l')+getN(k+'-w');
+  const cell = document.getElementById(k+'-cfp');
+  if(!cell) return;
+  cell.textContent = cfp > 0 ? cfp : '—';
+  cell.classList.toggle('active', cfp > 0);
+}
+
+function calcTotal(){
+  const total = EPS_FORM.reduce((s,ep)=>{
+    const k=epKey(ep.id);
+    return s+getN(k+'-e')+getN(k+'-x')+getN(k+'-l')+getN(k+'-w');
+  },0);
+  const cell = document.getElementById('cfp-total');
+  if(!cell) return;
+  cell.textContent = total > 0 ? total : '—';
+  cell.classList.toggle('active', total > 0);
+}
+
+function calcSubtotal(epIdx){
+  let ctrlId = null;
+  for(const [cid, idxs] of Object.entries(CTRL_EP_MAP)){
+    if(idxs.includes(epIdx)){ ctrlId=cid; break; }
+  }
+  if(!ctrlId) return;
+  const sub = CTRL_EP_MAP[ctrlId].reduce((s,i)=>{
+    const k=epKey(EPS_FORM[i].id);
+    return s+getN(k+'-e')+getN(k+'-x')+getN(k+'-l')+getN(k+'-w');
+  },0);
+  const cell = document.getElementById('sub-'+ctrlId);
+  if(cell){ cell.textContent=sub>0?sub:'—'; cell.classList.toggle('active',sub>0); }
+}
+
+function checkReady(){
+  const named = document.getElementById('f-nombre').value.trim().length > 0;
+  document.getElementById('submit-btn').disabled = !named;
+}
+
+async function submitForm(){
+  const nombre = document.getElementById('f-nombre').value.trim();
+  if(!nombre) return;
+
+  const payload = {
+    participante: nombre,
+    timestamp: new Date().toISOString(),
+    endpoints: EPS_FORM.map(ep=>{
+      const k = epKey(ep.id);
+      const E=getN(k+'-e'), X=getN(k+'-x'), L=getN(k+'-l'), W=getN(k+'-w');
+      return { ep:ep.id, E, X, L, W, CFP:E+X+L+W,
+               notas: document.getElementById(k+'-notes').value.trim() };
+    }),
+    cfpTotal: EPS_FORM.reduce((s,ep)=>{
+      const k=epKey(ep.id);
+      return s+getN(k+'-e')+getN(k+'-x')+getN(k+'-l')+getN(k+'-w');
+    },0)
+  };
+
+  const btn = document.getElementById('submit-btn');
+  btn.classList.add('loading'); btn.disabled=true;
+  hideMsg();
+
+  if(!SCRIPT_URL){
+    await new Promise(r=>setTimeout(r,900));
+    btn.classList.remove('loading');
+    showMsg('ok','[MODO DEMO] Datos listos. Configura SCRIPT_URL para activar el envío real. Revisa la consola (F12) para ver el payload.');
+    console.log('%cCOSMIC CFP — Payload listo para enviar:','color:#2563eb;font-weight:bold');
+    console.log(JSON.stringify(payload,null,2));
+    return;
+  }
+
+  try{
+    await fetch(SCRIPT_URL,{
+      method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'text/plain;charset=utf-8'},
+      body:JSON.stringify(payload)
+    });
+    btn.classList.remove('loading');
+    document.querySelectorAll('.mn,.nts,#f-nombre').forEach(el=>{
+      el.disabled=true; el.style.opacity='.6';
+    });
+    btn.style.display='none';
+    hideMsg();
+    const sc = document.getElementById('success-card');
+    if(sc) sc.classList.add('show');
+  }catch(err){
+    btn.classList.remove('loading'); btn.disabled=false;
+    showMsg('err','Error al enviar. Verifica tu conexión e inténtalo de nuevo.');
+  }
+}
+
+function showMsg(type,txt){
+  const el=document.getElementById('form-msg');
+  if(!el) return;
+  el.className='show '+type;
+  el.textContent=txt;
+}
+function hideMsg(){
+  const el=document.getElementById('form-msg');
+  if(el) el.className='';
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderAll();
+  setupNav();
+  setupBtt();
+  setupMobileMenu();
+  buildMForm();
+});
+</script>
+</body>
+</html>
